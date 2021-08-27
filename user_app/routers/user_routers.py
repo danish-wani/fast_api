@@ -1,8 +1,9 @@
-from enum import Enum
-from fastapi import APIRouter, Path
-from fastapi.param_functions import Query
+
+from typing import List
+from fastapi import APIRouter
+from fastapi.param_functions import Body, Query, Path
 from fastapi.responses import JSONResponse
-from user_app.schemas.user_schemas import User
+from user_app.schemas.user_schemas import User,Profession
 
 
 user_router = APIRouter(
@@ -10,25 +11,20 @@ user_router = APIRouter(
 )
 
 
-class Profession(str, Enum):
-    backend_engineer = 'backend_engineer'
-    frontend_engineer = 'frontend_engineer'
-    data_engineer = 'data_engineer'
-    full_stack_engineer = 'full_stack_engineer'
-
-
 
 USERS = {
-    1: {'name': 'danish', 'age': 28, 'city': 'srinagar', 'profession': 'backend_engineer'},
-    2: {'name': 'owais', 'age': 28, 'city': 'srinagar', 'profession': 'backend_engineer'},
-    3: {'name': 'basit', 'age': 28, 'city': 'srinagar', 'profession': 'frontend_engineer'},
-    4: {'name': 'qais', 'age': 28, 'city': 'srinagar', 'profession': 'data_engineer'},
+    1: {'name': 'danish', 'age': 28, 'city': 'srinagar', 'profession': Profession.backend_engineer},
+    2: {'name': 'owais', 'age': 28, 'city': 'srinagar', 'profession': Profession.backend_engineer},
+    3: {'name': 'basit', 'age': 28, 'city': 'srinagar', 'profession': Profession.frontend_engineer},
+    4: {'name': 'qais', 'age': 28, 'city': 'srinagar', 'profession': Profession.data_engineer},
 }
 
 
 @user_router.get('/')
-def users(user_id: int = Query(None, gt=0, title='ID of the User;', descritpion='Please Enter the ID of the User;'),
-        profession: Profession = Query(None, title='Profession of the User;', descritpion='Please Enter the Profession of the User;')):
+def users(
+    user_id: int = Query(None, gt=0, title='ID of the User;', descritpion='Please Enter the ID of the User;'), 
+    profession: Profession = Query(None, title='Profession of the User;', descritpion='Please Enter the Profession of the User;')
+    ):
     
     if user_id:
         return JSONResponse(USERS.get(user_id, {'Error': 'User with this id not found;'}))
@@ -43,6 +39,27 @@ def users(user_id: int = Query(None, gt=0, title='ID of the User;', descritpion=
     
     else:
         return JSONResponse(USERS)
+
+
+@user_router.get('/files/{file_path:path}/')
+def get_file_from_path(file_path: str = Path(..., max_length=50, min_length=2, description='Enter path of the file')):
+    
+    print(file_path, '....file path...')
+    return JSONResponse({'File Path': file_path})
+
+
+@user_router.post('/users/{keyword}/')
+def post_user(*, user: User = Body(..., embed=True), keyword: str, words: List[str] = Query(None)):
+    print(user, '...user...', keyword, '....keyword...')
+    next_id = max(USERS.keys()) + 1
+
+    USERS.update(
+        {
+            next_id: user
+        }
+    )
+    return USERS
+
 
 
 # @user_router.get('/{user_id}/')
